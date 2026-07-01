@@ -435,13 +435,17 @@
         // VARIABLES DEL ENTORNO DE GEMINI CANVAS
         // ==========================================
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'acopio-app-default';
-        const geminiApiKey = ""; 
+        const geminiApiKey = "AIzaSyBi6ceRmIq3z2RGfZoh16eGB_a27GI"; 
         
-        let firebaseConfig = null;
-        try {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                firebaseConfig = JSON.parse(__firebase_config);
-            }
+        const firebaseConfig = {
+  apiKey: "AIzaSyAhj3hFb4chw4KUlNqTrTMGo7SFdzef5S4",
+  authDomain: "acopio-inteligente.firebaseapp.com",
+  projectId: "acopio-inteligente",
+  storageBucket: "acopio-inteligente.firebasestorage.app",
+  messagingSenderId: "674303951242",
+  appId: "1:674303951242:web:e215cd152e8c53d377c873",
+  measurementId: "G-KC2080G2KY"
+};
         } catch (e) {
             console.error("Error leyendo configuración de base de datos:", e);
         }
