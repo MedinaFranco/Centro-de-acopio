@@ -263,6 +263,235 @@
                     </select>
                 </div>
                 <div>
+           </div>
+
+        <div class="z-10 flex-1 px-6 pb-10 flex flex-col gap-4 max-w-md mx-auto w-full">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 mb-2">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2"><i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>¿Cómo funciona?</h2>
+                <ul class="text-sm text-slate-600 space-y-3 font-medium">
+                    <li class="flex gap-3"><i class="fa-solid fa-camera text-blue-500 mt-1"></i> <span>Escanea donativos con la cámara y la IA los contará y clasificará por ti.</span></li>
+                    <li class="flex gap-3"><i class="fa-solid fa-tags text-purple-500 mt-1"></i> <span>Auto-etiquetado para voluntarios (ej. clasifica automáticamente qué es un Antibiótico o Analgésico).</span></li>
+                    <li class="flex gap-3"><i class="fa-solid fa-cloud-arrow-up text-green-500 mt-1"></i> <span>Sincronización en tiempo real para todo tu equipo de voluntarios.</span></li>
+                </ul>
+            </div>
+
+            <button onclick="window.openCreateCenterModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-3 text-lg">
+                <i class="fa-solid fa-plus-circle"></i> Crear Nuevo Centro
+            </button>
+            
+            <button onclick="window.openJoinCenterModal()" class="w-full bg-white hover:bg-slate-50 text-blue-600 border-2 border-blue-600 font-bold py-4 rounded-2xl shadow transition-transform active:scale-95 flex items-center justify-center gap-3 text-lg">
+                <i class="fa-solid fa-right-to-bracket"></i> Ingresar a tu Centro
+            </button>
+            
+            <!-- Botón de compartir eliminado -->
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- 2. APLICACIÓN PRINCIPAL (INVENTARIO) -->
+    <!-- ========================================== -->
+    <div id="app-view" class="h-screen flex flex-col overflow-hidden hidden">
+        
+        <header class="bg-blue-600 text-white p-4 shadow-md z-10 flex justify-between items-center shrink-0">
+            <div class="flex-1 min-w-0 pr-2">
+                <h1 class="text-xl font-bold leading-tight truncate">Centro de Acopio</h1>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <p id="current-center-name" class="text-xs text-blue-200 font-semibold truncate bg-blue-700/50 px-2 py-0.5 rounded-full inline-block max-w-full">
+                        Cargando...
+                    </p>
+                    <button onclick="window.openEditCenterModal()" class="text-blue-200 hover:text-white shrink-0 bg-blue-700/50 w-6 h-6 rounded-full flex items-center justify-center transition-colors">
+                        <i class="fa-solid fa-gear text-[10px]"></i>
+                    </button>
+                    <button onclick="window.logoutCenter()" class="text-blue-200 hover:text-white shrink-0 bg-blue-700/50 w-6 h-6 rounded-full flex items-center justify-center transition-colors" title="Cerrar sesión">
+                        <i class="fa-solid fa-door-open text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <div id="sync-status" class="w-2 h-2 rounded-full bg-red-400 animate-pulse" title="Conectando nube..."></div>
+                <div class="bg-blue-700 px-3 py-1 rounded-full text-sm font-semibold shadow-inner">
+                    <span id="total-items-badge">0</span> items
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto hide-scroll relative pb-20 bg-slate-50">
+            <!-- Tab 1: Escáner IA (Entradas) -->
+            <section id="tab-scanner" class="p-4 h-full flex flex-col fade-in hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex-1 flex flex-col">
+                    <h2 class="text-lg font-bold mb-2 flex items-center gap-2 text-slate-700">
+                        <i class="fa-solid fa-camera text-blue-500"></i> Escanear Llegadas (IA)
+                    </h2>
+                    <p class="text-sm text-slate-500 mb-4">La IA analizará, contará y sub-categorizará los insumos (ej. Antibióticos, Analgésicos).</p>
+                    <div class="relative flex-1 bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center min-h-[300px]">
+                        <video id="camera-stream" class="absolute inset-0 w-full h-full object-cover" autoplay playsinline muted></video>
+                        <canvas id="photo-canvas" class="hidden absolute inset-0 w-full h-full object-cover"></canvas>
+                        <div id="ai-loading" class="hidden absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white z-10">
+                            <div class="loader mb-4"></div>
+                            <p class="font-semibold animate-pulse text-center px-4">Clasificando donativos...<br><span class="text-sm text-slate-300">Un momento por favor</span></p>
+                        </div>
+                        <div id="camera-error" class="hidden text-white text-center p-4">
+                            <i class="fa-solid fa-video-slash text-4xl mb-2 text-slate-400"></i>
+                            <p>Sin acceso a la cámara.</p>
+                            <button onclick="window.startCamera()" class="mt-4 bg-blue-600 px-4 py-2 rounded-lg">Reintentar</button>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button id="btn-capture" onclick="window.takePhotoAndAnalyze()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-95 flex justify-center items-center gap-2 text-lg">
+                            <i class="fa-solid fa-expand"></i> Analizar Foto
+                        </button>
+                        <button id="btn-retake" onclick="window.resetCamera()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 px-6 rounded-xl shadow transition-transform active:scale-95">
+                            <i class="fa-solid fa-rotate-right"></i> Reintentar
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Entrada Manual -->
+            <section id="tab-manual" class="p-4 hidden fade-in">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700">
+                        <i class="fa-solid fa-pen-to-square text-green-500"></i> Registro de Entradas
+                    </h2>
+                    <form id="manual-form" onsubmit="window.handleManualSubmit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Categoría</label>
+                            <select id="manual-category" required class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg focus:ring-green-500 focus:border-green-500 block p-3">
+                                <option value="Medicamentos">💊 Medicamentos</option>
+                                <option value="Material Médico Quirúrgico">🩹 Material Médico Quirúrgico</option>
+                                <option value="Alimentos">🥫 Alimentos</option>
+                                <option value="Ropa">👕 Ropa</option>
+                                <option value="Juguetes">🧸 Juguetes</option>
+                                <option value="Otros">📦 Otros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Nombre del Insumo</label>
+                            <input type="text" id="manual-name" required placeholder="Ej. Ibuprofeno 400mg, Arroz 1kg" class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg focus:ring-green-500 focus:border-green-500 block p-3">
+                            <p class="text-[10px] text-slate-500 mt-1">La IA le asignará la subcategoría correcta (ej. Analgésico) al guardar.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Cantidad Recibida</label>
+                            <input type="number" id="manual-qty" required min="1" value="1" class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg focus:ring-green-500 focus:border-green-500 block p-3">
+                        </div>
+                        <button type="submit" id="manual-submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-95 flex justify-center items-center gap-2 mt-6">
+                            <i class="fa-solid fa-arrow-down"></i> Sumar al Inventario
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Tab 3: Inventario y Extracción -->
+            <section id="tab-inventory" class="p-4 hidden fade-in h-full flex-col">
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-2xl font-bold text-slate-800">Stock Actual</h2>
+                    <button onclick="window.exportToCSV('inventory')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-2 transition-colors text-sm">
+                        <i class="fa-solid fa-file-excel"></i> Exportar
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
+                    <div class="overflow-y-auto flex-1 p-0" id="inventory-container">
+                        <div id="empty-state" class="p-8 text-center text-slate-400 flex flex-col items-center justify-center h-full">
+                            <i class="fa-solid fa-box-open text-5xl mb-3"></i>
+                            <p>No hay stock registrado.</p>
+                        </div>
+                        <table id="inventory-table" class="hidden w-full text-sm text-left text-slate-500">
+                            <thead class="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0 shadow-sm z-10">
+                                <tr>
+                                    <th scope="col" class="px-3 py-3">Insumo</th>
+                                    <th scope="col" class="px-2 py-3 text-center">Cant.</th>
+                                    <th scope="col" class="px-3 py-3 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: Salidas -->
+            <section id="tab-outputs" class="p-4 hidden fade-in h-full flex-col">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Salidas</h2>
+                        <p class="text-xs text-slate-500">Registro de entregas y despachos</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-0 flex-1 overflow-y-auto">
+                    <ul id="outputs-list" class="divide-y divide-slate-100">
+                        <li class="p-8 text-center text-slate-400">Cargando salidas...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Tab 5: Historial General -->
+            <section id="tab-history" class="p-4 hidden fade-in h-full flex-col">
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-2xl font-bold text-slate-800">Historial Total</h2>
+                    <button onclick="window.exportToCSV('history')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-2 transition-colors text-sm">
+                        <i class="fa-solid fa-file-excel"></i> Reporte
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-0 flex-1 overflow-y-auto">
+                    <ul id="history-list" class="divide-y divide-slate-100">
+                        <li class="p-8 text-center text-slate-400">Cargando historial...</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bg-white border-t border-slate-200 pb-safe shrink-0">
+            <ul class="flex justify-around items-center p-1">
+                <li class="flex-1"><button onclick="window.switchTab('scanner')" id="nav-scanner" class="nav-btn w-full flex flex-col items-center p-2 text-slate-400 hover:text-blue-500 transition-colors"><i class="fa-solid fa-camera text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-wider">Escáner</span></button></li>
+                <li class="flex-1"><button onclick="window.switchTab('manual')" id="nav-manual" class="nav-btn w-full flex flex-col items-center p-2 text-slate-400 hover:text-blue-500 transition-colors"><i class="fa-solid fa-arrow-down text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-wider">Entradas</span></button></li>
+                <li class="flex-1"><button onclick="window.switchTab('inventory')" id="nav-inventory" class="nav-btn w-full flex flex-col items-center p-2 text-blue-600 transition-colors"><i class="fa-solid fa-boxes-stacked text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-wider">Stock</span></button></li>
+                <li class="flex-1"><button onclick="window.switchTab('outputs')" id="nav-outputs" class="nav-btn w-full flex flex-col items-center p-2 text-slate-400 hover:text-blue-500 transition-colors"><i class="fa-solid fa-arrow-up-right-from-square text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-wider">Salidas</span></button></li>
+                <li class="flex-1"><button onclick="window.switchTab('history')" id="nav-history" class="nav-btn w-full flex flex-col items-center p-2 text-slate-400 hover:text-blue-500 transition-colors"><i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-wider">Historial</span></button></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. MODALES DE LA APLICACIÓN -->
+    <!-- ========================================== -->
+    <!-- Modal: Crear Centro -->
+    <div id="create-center-modal" class="hidden fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center fade-in px-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <h3 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-plus-circle text-blue-600"></i> Nuevo Centro</h3>
+            <p class="text-sm text-slate-500 mb-6">Crea un espacio privado para tu equipo.</p>
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Nombre del Centro / Sede</label>
+                    <input type="text" id="new-center-name" placeholder="Ej. Acopio 1" class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Contraseña de acceso</label>
+                    <input type="password" id="new-center-pwd" placeholder="Crea una contraseña compartida" class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3">
+                    <p class="text-[10px] text-slate-400 mt-1">Comparte esta contraseña solo con tus voluntarios.</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="window.closeCreateCenterModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button>
+                <button onclick="window.executeCreateCenter()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95">Crear Centro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Ingresar a Centro -->
+    <div id="join-center-modal" class="hidden fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center fade-in px-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <h3 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-right-to-bracket text-blue-600"></i> Ingresar</h3>
+            <p class="text-sm text-slate-500 mb-6">Selecciona tu sede e ingresa la contraseña.</p>
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Selecciona el Centro</label>
+                    <select id="join-center-select" class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 font-semibold">
+                        <option value="">Cargando centros...</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-sm font-bold text-slate-700 mb-1">Contraseña</label>
                     <input type="password" id="join-center-pwd" placeholder="Ingresa la contraseña" class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3">
                 </div>
